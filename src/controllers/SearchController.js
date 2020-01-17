@@ -1,6 +1,6 @@
 'use strict'
 
-const Dev = require('../models/DevModel');
+const DevModule = require('../modules/SearchModule');
 const { parseStringToArray } = require('../utils/parser');
 
 module.exports = {
@@ -9,20 +9,7 @@ module.exports = {
 
         const techsArray = parseStringToArray(techs);
 
-        const devs = await Dev.find({
-            techs: {
-                $in: techsArray
-            },
-            location: {
-                $near: {
-                    $geometry: {
-                        type: 'Point',
-                        coordinates: [longitude, latitude],
-                        maxDistance: 10000
-                    }
-                }
-            }
-        });
+        const devs = await DevModule.searchDevsByLocationAndTechs(techsArray, latitude, longitude);
 
         return res.json(devs);
     }

@@ -1,12 +1,12 @@
 'use strict'
 
 const githuApi = require('../services/githubApi');
-const Dev = require('../models/DevModel');
+const DevModule = require('../modules/DevModule');
 const { parseStringToArray } = require('../utils/parser');
 
 module.exports = {
     async index(req, res) {
-        const devs = await Dev.find();
+        const devs = await DevModule.getDevs();
 
         return res.json(devs);
     },
@@ -14,7 +14,7 @@ module.exports = {
     async store(req, res) {
         const { github_username, techs, latitude, longitude } = req.body;
 
-        let dev = await Dev.findOne({ github_username });
+        let dev = await DevModule.getDevByGithubUsername(github_username);
 
         if (!dev) {
             const request = await githuApi.get(`/users/${github_username}`);
@@ -28,14 +28,16 @@ module.exports = {
                 coordinates: [longitude, latitude]
             }
 
-            dev = await Dev.create({
+            const dev_data = {
                 name,
                 github_username,
                 avatar_url,
                 bio,
                 techs: techsArray,
                 location
-            });
+            }
+
+            dev = await DevModule.insertDev(dev_data);
         }
 
         return res.json(dev);
@@ -51,7 +53,7 @@ module.exports = {
             techsArray = parseStringToArray(techs);
         }
 
-        const dev = await Dev.findById(id);
+        const dev = await DevModule.getDevByID(id);
 
         const location = {
             type: 'Point',
@@ -77,7 +79,7 @@ module.exports = {
     async destroy(req, res) {
         const { id } = req.params;
 
-        const dev = await Dev.findByIdAndDelete(id);
+        const dev = await DevModule.deleteDev(id);
 
         if (!dev) {
             return res.status(404).json({ message: "User not found" });
